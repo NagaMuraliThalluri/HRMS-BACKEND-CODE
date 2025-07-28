@@ -1,20 +1,27 @@
-const { Pool } = require("pg");
+// db.js
+require('dotenv').config();
+const { Pool } = require('pg');
 
 const pool = new Pool({
-  user: "postgres",          
-  host: "localhost",
-  database: "student_db",
-  password: "Naga@1234",
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  min: 0,
+  idleTimeoutMillis: 20000,
+  connectionTimeoutMillis: 5000,
 });
 
-// Test connection
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.error("Connection error:", err);
-  } else {
-    console.log("Connected to DB at:", res.rows[0].now);
-  }
+pool.on('error', err => {
+  console.error('⚠️ Unexpected pg pool error:', err);
 });
+
+(async () => {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log('DB connected at:', res.rows[0].now);
+  } catch (err) {
+    console.error('Initial connection failed:', err);
+  }
+})();
 
 module.exports = pool;
